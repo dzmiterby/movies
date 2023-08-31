@@ -2,14 +2,12 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 import { Space, Alert, Spin } from 'antd';
 
-import Header from './Header/Header';
-import Main from './Main/Main';
-import Footer from './Footer/Footer';
-import { Context } from './Genres/Genres';
+import MoviesService from '../MoviesService/MoviesService';
 
-const authorization_key =
-  'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzYjFmZWUxNTBiNmJkOGZkYWQ4ZTUxNTdiMDhmNTU1MyIsInN1YiI6IjY0ZTJmNjZjZTE5ZGU5MDEzYTI5NWExMyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.zeXbGyhm_PZ-XRq47Ribl412-gn0d4SIg4R6clIl1hE';
-const account_id = '20330534';
+import Header from './Header';
+import Main from './Main';
+import Footer from './Footer';
+import { Context } from './Genres';
 
 function App() {
   const [movies, setMovies] = useState([]);
@@ -29,121 +27,81 @@ function App() {
 
   // Поиск фильмов
   function seachMovies(seach, page = 1) {
+    const callMovieService = new MoviesService();
     setIsLoaded(false);
     setNoResult(false);
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${authorization_key}`,
-      },
-    };
-    fetch(
-      `https://api.themoviedb.org/3/search/movie?query=${seach}&include_adult=false&language=en-US&page=${page}`,
-      options
-    )
-      .then((response) => response.json())
-      .then(
-        (result) => {
-          setIsLoaded(true);
-          let arrayMovies = result.results;
-          for (let elem of arrayMovies) {
-            elem['rating'] = 0;
-          }
-          setMovies(arrayMovies);
-          setNavLoad(true);
-          if (result.total_results > 10000) {
-            setTotal(10000);
-          } else {
-            setTotal(result.total_results);
-          }
-          if (arrayMovies.length === 0) {
-            setNoResult(true);
-            setNavLoad(false);
-          }
-        },
-        (error) => {
-          setIsLoaded(true);
-          setError(error);
+    callMovieService
+      .fetchSearchMovies(seach, page)
+      .then((result) => {
+        setIsLoaded(true);
+        let arrayMovies = result.results;
+        for (let elem of arrayMovies) {
+          elem['rating'] = 0;
         }
-      );
+        setMovies(arrayMovies);
+        setNavLoad(true);
+        if (result.total_results > 10000) {
+          setTotal(10000);
+        } else {
+          setTotal(result.total_results);
+        }
+        if (arrayMovies.length === 0) {
+          setNoResult(true);
+          setNavLoad(false);
+        }
+      })
+      .catch((error) => {
+        setIsLoaded(true);
+        setError(error);
+      });
   }
 
   // Список жанров
   function getListGenres() {
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${authorization_key}`,
-      },
-    };
-    fetch('https://api.themoviedb.org/3/genre/movie/list?language=en', options)
-      .then((response) => response.json())
-      .then(
-        (result) => {
-          setGenres(result.genres);
-        },
-        (error) => {
-          console.log(error.message);
-        }
-      );
+    const callMovieService = new MoviesService();
+    callMovieService
+      .fetchGetListGenres()
+      .then((result) => {
+        setGenres(result.genres);
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
   }
 
   // Добавление оценки фильму
   function putRateMovie(movie_id, guest_id, stars) {
-    const options = {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json;charset=utf-8',
-        Authorization: `Bearer ${authorization_key}`,
-      },
-      body: stars,
-    };
-    fetch(`https://api.themoviedb.org/3/movie/${movie_id}/rating?guest_session_id=${guest_id}`, options)
-      .then((response) => response.text())
-      .catch((error) => {
-        console.log(error.message);
-      });
+    const callMovieService = new MoviesService();
+    callMovieService.fetchPutRateMovie(movie_id, guest_id, stars).catch((error) => {
+      console.log(error.message);
+    });
   }
 
   // Оцененные фильмы
   function getRatedMovies(page = 1) {
     setIsLoaded(false);
     setNoResult(false);
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${authorization_key}`,
-      },
-    };
-    fetch(
-      `https://api.themoviedb.org/3/account/${account_id}/rated/movies?language=en-US&page=${page}&sort_by=created_at.asc`,
-      options
-    )
-      .then((response) => response.json())
-      .then(
-        (result) => {
-          setIsLoaded(true);
-          let arrayRatedMovies = result.results;
-          setRated(arrayRatedMovies);
-          setNavLoad(true);
-          if (arrayRatedMovies.length === 0) {
-            setNoResult(true);
-            setNavLoad(false);
-          }
-          if (result.total_results > 10000) {
-            setTotalRated(10000);
-          } else {
-            setTotalRated(result.total_results);
-          }
-        },
-        (error) => {
-          console.log(error.message);
+    const callMovieService = new MoviesService();
+    callMovieService
+      .fetchGetRatedMovies(page)
+      .then((result) => {
+        setIsLoaded(true);
+        let arrayRatedMovies = result.results;
+        setRated(arrayRatedMovies);
+        setNavLoad(true);
+        if (arrayRatedMovies.length === 0) {
+          setNoResult(true);
+          setNavLoad(false);
         }
-      );
+        if (result.total_results > 10000) {
+          setTotalRated(10000);
+        } else {
+          setTotalRated(result.total_results);
+        }
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
   }
 
   // Популярные фильмы
@@ -151,66 +109,50 @@ function App() {
     setIsLoaded(false);
     setNoResult(false);
     setNavLoad(false);
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${authorization_key}`,
-      },
-    };
-    fetch(`https://api.themoviedb.org/3/movie/popular?language=en-US&page=${page}`, options)
-      .then((response) => response.json())
-      .then(
-        (result) => {
-          setIsLoaded(true);
-          let arrayMovies = result.results;
-          for (let elem of arrayMovies) {
-            elem['rating'] = 0;
-          }
-          setMovies(arrayMovies);
-          setNavLoad(true);
-          if (result.total_results > 10000) {
-            setTotal(10000);
-          } else {
-            setTotal(result.total_results);
-          }
-          if (arrayMovies.length === 0) {
-            setNoResult(true);
-            setNavLoad(false);
-          }
-        },
-        (error) => {
-          setIsLoaded(true);
-          setError(error);
+    const callMovieService = new MoviesService();
+    callMovieService
+      .fetchGetPopularMovies(page)
+      .then((result) => {
+        setIsLoaded(true);
+        let arrayMovies = result.results;
+        for (let elem of arrayMovies) {
+          elem['rating'] = 0;
         }
-      );
+        setMovies(arrayMovies);
+        setNavLoad(true);
+        if (result.total_results > 10000) {
+          setTotal(10000);
+        } else {
+          setTotal(result.total_results);
+        }
+        if (arrayMovies.length === 0) {
+          setNoResult(true);
+          setNavLoad(false);
+        }
+      })
+      .catch((error) => {
+        setIsLoaded(true);
+        setError(error);
+      });
   }
 
   // Создание гостевой сессии
   function createGuestSession() {
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${authorization_key}`,
-      },
-    };
-    fetch('https://api.themoviedb.org/3/authentication/guest_session/new', options)
-      .then((response) => response.json())
-      .then(
-        (result) => {
-          setGuest(result.guest_session_id);
-        },
-        (error) => {
-          console.log(error.message);
-        }
-      );
+    const callMovieService = new MoviesService();
+    callMovieService
+      .fetchCreateGuestSession()
+      .then((result) => {
+        setGuest(result.guest_session_id);
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
   }
 
   useEffect(() => {
     if (!guest) {
-      getPopularMovies();
       createGuestSession();
+      getPopularMovies();
       getListGenres();
     }
   }, [guest]);

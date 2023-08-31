@@ -1,5 +1,5 @@
 import React from 'react';
-import '../App.css';
+import './App.css';
 import { Tabs } from 'antd';
 import PropTypes from 'prop-types';
 

@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import '../App.css';
+import './App.css';
 import { format, parseISO } from 'date-fns';
 import { Tag, Typography, Rate } from 'antd';
 
-import { Context } from '../Genres/Genres';
-import no_poster from '../../images/no_poster.jpg';
+import no_poster from '../images/no_poster.jpg';
+
+import { Context } from './Genres';
 
 function Movie({
   id,
